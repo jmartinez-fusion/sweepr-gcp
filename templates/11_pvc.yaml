@@ -1,0 +1,16 @@
+---
+kind: PersistentVolumeClaim
+apiVersion: v1
+metadata:
+  name: {{ .Values.nameSpace }}-shared-data
+  namespace: {{ .Values.nameSpace }}
+spec:
+  storageClassName: standard
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 100Mi
+  selector:
+    matchLabels:
+      folder: root

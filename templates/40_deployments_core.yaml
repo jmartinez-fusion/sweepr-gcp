@@ -1,0 +1,123 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: mysql-configmap
+  namespace: {{ .Values.nameSpace }}
+data:
+  configmap.cnf: |
+    [mysqld] 
+    max_allowed_packet = 16M
+    max_connections = 500
+    log_bin_trust_function_creators = 1
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: mysql
+spec:
+  selector:
+    matchLabels:
+      app: mysql
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: mysql
+    spec:
+      containers:
+        - image: 806732873011.dkr.ecr.eu-west-1.amazonaws.com/sweepr/mysql:8.0.39
+          name: mysql
+          env:
+            - name: MYSQL_ROOT_PASSWORD
+              value: "11sweepr22"
+            - name: MYSQL_DATABASE
+              value: "sweeprplatform"
+            - name: MYSQL_USER
+              value: "sweeprdbadmin"
+            - name: MYSQL_PASSWORD
+              value: "11sweepr22"
+          ports:
+            - containerPort: 3306
+              name: mysql
+          volumeMounts:
+            - mountPath: /var/lib/mysql
+              name: {{ .Values.nameSpace }}-shared-data
+              subPath: mysql
+            - name: mysql-configmap
+              mountPath: /etc/mysql/conf.d/configmap.cnf
+              subPath: configmap.cnf
+      restartPolicy: Always
+      volumes:
+        - name: {{ .Values.nameSpace }}-shared-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.nameSpace }}-shared-data
+        - name: mysql-configmap
+          configMap:
+            name: mysql-configmap
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: platform
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+  selector:
+    matchLabels:
+      app: platform
+  template:
+    metadata:
+      creationTimestamp: null
+      labels:
+        app: platform
+        version: {{ .Values.platform.version }}
+    spec:
+      containers:
+        - env:
+            - name: DEBUGGER_OPTS
+              value: -agentlib:jdwp=transport=dt_socket,server=y,suspend=n,address=*:5005
+            - name: JAVA_OPTS
+              value: -Dspring.profiles.active={{ .Values.platform.profile }} -Dhazelcast.yaml.config.indentation.check.enabled=false --add-opens java.base/java.time=ALL-UNNAMED
+            # Java 11 MEMORY_OPTS
+            - name: MEMORY_OPTS
+              value: -Xmx{{ .Values.platform.xmx }}
+            - name: KUBERNETES_NAMESPACE
+              value: {{ .Values.nameSpace }}
+          image: {{ .Values.platform.image }}:{{ .Values.platform.version }}
+          imagePullPolicy: "Always"
+          resources:
+            limits:
+              memory: {{ .Values.platform.limit }}
+          name: platform
+          lifecycle:
+            postStart:
+              exec:
+                command: ["/bin/bash", "-c", "apt install curl"]
+          ports:
+            - containerPort: 5005
+            - containerPort: 8090
+            - containerPort: 1099
+            - containerPort: 5701
+            - containerPort: 9230
+          livenessProbe:
+            httpGet:
+              path: /actuator/health
+              port: 8090
+            initialDelaySeconds: 300
+            periodSeconds: 300
+          volumeMounts:
+            - mountPath: /data
+              name: {{ .Values.nameSpace }}-shared-data #platform-claim0
+            - mountPath: /config
+              name: {{ .Values.nameSpace }}-shared-data #platform-claim1
+              subPath: {{ .Values.platform.folder }}/config
+            - mountPath: /jackrabbit/cms
+              name: {{ .Values.nameSpace }}-shared-data
+              subPath: jackrabbit/cms
+      restartPolicy: Always
+      volumes:
+        - name: {{ .Values.nameSpace }}-shared-data
+          persistentVolumeClaim:
+            claimName: {{ .Values.nameSpace }}-shared-data
