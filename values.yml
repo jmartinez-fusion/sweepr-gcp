@@ -2,7 +2,7 @@ replicaCount: 1
 nameSpace : gcp
 
 platform:
-  image: 806732873011.dkr.ecr.eu-west-1.amazonaws.com/sweepr/platform
+  image: europe-west9-docker.pkg.dev/dev-fusion-451217/dev-repo/platform 
   version: latest
   folder: gcp
   profile: gcp
