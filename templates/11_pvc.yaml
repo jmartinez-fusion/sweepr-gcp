@@ -5,9 +5,8 @@ metadata:
   name: {{ .Values.nameSpace }}-shared-data
   namespace: {{ .Values.nameSpace }}
 spec:
-  storageClassName: standard
   accessModes:
-  - ReadWriteMany
+  - ReadWriteOnce
   resources:
     requests:
       storage: 100Mi
