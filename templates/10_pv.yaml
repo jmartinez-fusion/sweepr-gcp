@@ -10,13 +10,20 @@ spec:
     storage: 100Mi
   volumeMode: Filesystem
   accessModes:
-  - ReadWriteMany
+  - ReadWriteOnce
   persistentVolumeReclaimPolicy: Retain
   claimRef:
     namespace: {{ .Values.nameSpace }}
     name: {{ .Values.nameSpace }}-shared-data
-  storageClassName: standard
   gcePersistentDisk:
     pdName: nfs
     fsType: ext4
 # nodeAffinity is required so we use a "generic" value that all nodes share, as the EFS is already mounted there
+  nodeAffinity:
+    required:
+      nodeSelectorTerms:
+      - matchExpressions:
+        - key: kubernetes.io/os
+          operator: In
+          values:
+            - linux
