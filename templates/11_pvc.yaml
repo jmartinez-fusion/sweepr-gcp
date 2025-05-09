@@ -5,11 +5,12 @@ metadata:
   name: {{ .Values.nameSpace }}-shared-data
   namespace: {{ .Values.nameSpace }}
 spec:
+  storageClassName: standard
   accessModes:
-  - ReadWriteOnce
+  - ReadWriteMany
   resources:
     requests:
-      storage: 100Mi
+      storage: 1Gb
   selector:
     matchLabels:
       folder: root
