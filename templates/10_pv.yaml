@@ -7,16 +7,17 @@ metadata:
     folder: root
 spec:
   capacity:
-    storage: 100Mi
-  volumeMode: Filesystem
+    storage: 1Ti
   accessModes:
-  - ReadWriteOnce
+  - ReadWriteMany
   persistentVolumeReclaimPolicy: Retain
+  volumeMode: Filesystem
+  csi:
+    driver: filestore.csi.storage.gke.io
+    volumeHandle: "modeInstance/us-central1-a/test-fl/nfsshared"
+    volumeAttributes:
+      ip: 10.0.1.2
+      volume: nfsshared
   claimRef:
     namespace: {{ .Values.nameSpace }}
     name: {{ .Values.nameSpace }}-shared-data
-  gcePersistentDisk:
-    pdName: nfs
-    fsType: ext4
-# nodeAffinity is required so we use a "generic" value that all nodes share, as the EFS is already mounted there
-  
