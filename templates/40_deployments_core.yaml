@@ -105,8 +105,8 @@ spec:
             httpGet:
               path: /actuator/health
               port: 8090
-            initialDelaySeconds: 300
-            periodSeconds: 300
+            initialDelaySeconds: 300000
+            periodSeconds: 300000
           volumeMounts:
             - mountPath: /data
               name: {{ .Values.nameSpace }}-shared-data #platform-claim0
