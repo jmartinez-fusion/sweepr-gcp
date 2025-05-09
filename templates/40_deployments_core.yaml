@@ -95,6 +95,13 @@ spec:
             postStart:
               exec:
                 command: ["/bin/bash", "-c", "apt install curl"]
+                command:
+                  - sh
+                  - -c
+                  - |
+                    mkdir -p /mnt/gcp/config
+                    mkdir -p /mnt/jackrabbit/cms
+                    mkdir -p /mnt/data
           ports:
             - containerPort: 5005
             - containerPort: 8090
